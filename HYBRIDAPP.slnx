@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path="cd.yml" />
+    <File Path="ci.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="READEME.txt" />
+  </Folder>
+  <Project Path="HYBRIDAPP.Shared/HYBRIDAPP.Shared.csproj" />
+  <Project Path="HYBRIDAPP.Web.Client/HYBRIDAPP.Web.Client.csproj" />
+  <Project Path="HYBRIDAPP.Web/HYBRIDAPP.Web.csproj" />
+  <Project Path="HYBRIDAPP/HYBRIDAPP.csproj">
+    <Deploy Solution="Debug|*" />
+  </Project>
+</Solution>

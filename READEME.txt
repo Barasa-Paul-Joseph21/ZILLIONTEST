@@ -1,0 +1,346 @@
+# HYBRIDAPP
+
+A professional **.NET 10 Hybrid Blazor solution** demonstrating a shared UI architecture between a Blazor Web App and a .NET MAUI application. The project implements a complete **User Management CRUD module** using **Entity Framework Core**, **SQL Server LocalDB**, and **FluentValidation**, with a clean layered architecture and dependency injection.
+
+---
+
+## Features
+
+* User registration
+* User listing in a responsive data table
+* Search user by ID
+* View user details in a modal dialog
+* Edit existing users with form pre-fill
+* Delete users by ID
+* Success and error notifications
+* Instant UI refresh after create, update, and delete
+* Server-side database access without REST APIs
+* Shared Razor components and DTOs between Web and MAUI projects
+* FluentValidation-based input validation
+* Entity Framework Core Code-First migrations
+
+---
+
+## Solution Structure
+
+```text
+HYBRIDAPP
+├── HYBRIDAPP                # .NET MAUI application
+├── HYBRIDAPP.Shared         # Shared Razor components, DTOs, models, interfaces, validators
+├── HYBRIDAPP.Web            # ASP.NET Core Blazor Web App (server + database)
+└── HYBRIDAPP.Web.Client     # Blazor WebAssembly client for Interactive Auto mode
+```
+
+### Shared Project
+
+```text
+HYBRIDAPP.Shared
+├── DTOs
+│   ├── CreateUserDto.cs
+│   └── UpdateUserDto.cs
+├── Interfaces
+│   └── IUserService.cs
+├── Models
+│   └── Register.cs
+├── Pages
+│   └── Users.razor
+└── Validators
+    ├── CreateUserDtoValidator.cs
+    └── UpdateUserDtoValidator.cs
+```
+
+### Web Project
+
+```text
+HYBRIDAPP.Web
+├── Data
+│   └── AppDbContext.cs
+├── Services
+│   └── UserService.cs
+├── Program.cs
+└── appsettings.json
+```
+
+---
+
+## Technology Stack
+
+* **.NET 10**
+* **Blazor Web App (Interactive Auto)**
+* **ASP.NET Core**
+* **Entity Framework Core**
+* **SQL Server LocalDB**
+* **FluentValidation**
+* **C#**
+* **Razor Components**
+* **Dependency Injection**
+
+---
+
+## Architecture
+
+This project uses a **server-side service architecture** for CRUD operations.
+
+```text
+Users.razor
+      │
+      ▼
+IUserService
+      │
+      ▼
+UserService
+      │
+      ▼
+AppDbContext
+      │
+      ▼
+SQL Server
+```
+
+### Important
+
+* The **Blazor Web App** accesses the database directly through `UserService`.
+* No HTTP API or REST controller is used for the web CRUD flow.
+* Shared components are compiled into the Web application and communicate through direct method calls.
+
+
+
+
+## Getting Started (Clone and Run on Another Machine)
+
+These steps allow another developer to clone the repository, install dependencies, configure the database, and run the application successfully.
+
+### 1. Prerequisites
+
+Install the following software:
+
+* **Visual Studio 2026** (or Visual Studio 2022 with .NET 10 SDK)
+* **.NET 10 SDK**
+* **SQL Server Express LocalDB**
+* **Git**
+
+Verify installations:
+
+```powershell
+dotnet --version
+git --version
+sqllocaldb info
+```
+
+The `sqllocaldb info` command should list `MSSQLLocalDB`.
+
+---
+
+### 2. Clone the Repository
+
+```powershell
+git clone https://github.com/YOUR_USERNAME/HYBRIDAPP.git
+cd HYBRIDAPP
+```
+
+Replace `YOUR_USERNAME` with the actual GitHub username.
+
+---
+
+### 3. Restore NuGet Packages
+
+Restore packages for the entire solution:
+
+```powershell
+dotnet restore
+```
+
+---
+
+### 4. Install Required Packages (if restore does not already include them)
+
+#### Shared project
+
+```powershell
+cd HYBRIDAPP.Shared
+dotnet add package FluentValidation
+cd ..
+```
+
+#### Web project
+
+```powershell
+cd HYBRIDAPP.Web
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package FluentValidation
+cd ..
+```
+
+---
+
+### 5. Configure the Database Connection
+
+Open:
+
+```text
+HYBRIDAPP.Web/appsettings.json
+```
+
+Set the connection string:
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": ......
+}
+```
+
+For local development, User Secrets are recommended:
+
+```powershell
+cd HYBRIDAPP.Web
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=(localdb)\\MSSQLLocalDB;Database=HybridAppDb;Trusted_Connection=True;MultipleActiveResultSets=true;TrustServerCertificate=True"
+```
+
+---
+
+### 6. Create the Database
+
+From the **HYBRIDAPP.Web** folder:
+
+```powershell
+cd HYBRIDAPP.Web
+dotnet ef database update
+```
+
+This creates the database and applies all migrations automatically.
+
+---
+
+### 7. Build the Solution
+
+```powershell
+dotnet build
+```
+
+Expected result:
+
+```text
+Build succeeded.
+```
+
+---
+
+### 8. Run the Web Application
+
+```powershell
+cd HYBRIDAPP.Web
+dotnet run
+```
+
+The terminal will display a URL similar to:
+
+```text
+https://localhost:7085
+```
+
+Open the browser and navigate to:
+
+```text
+https://localhost:7085/users
+```
+
+---
+
+### 9. Verify the Application
+
+Test the following:
+
+* Create a user
+* Edit a user
+* Delete a user
+* View user details
+* Submit an empty form and confirm validation messages appear
+
+If all actions work, the setup is successful.
+
+---
+
+## Running from Visual Studio
+
+1. Open `HYBRIDAPP.sln`
+2. Right-click **HYBRIDAPP.Web**
+3. Select **Set as Startup Project**
+4. Press **F5**
+
+---
+
+## CI/CD Pipeline (GitHub Actions)
+
+This repository includes a basic CI pipeline that automatically restores packages, builds the solution, and runs tests whenever code is pushed to `main` or a pull request is created.
+
+The pipeline status appears on every commit and pull request.
+
+---
+
+## Viewing Pipeline Results
+
+1. Open the GitHub repository.
+2. Click the **Actions** tab.
+3. Select the latest workflow run.
+4. Review each step (restore, build, test).
+
+A green check mark means the build passed.
+
+---
+
+## Recommended Team Workflow
+
+### Feature development
+
+```powershell
+git checkout -b feature/user-validation
+git add .
+git commit -m "Add user validation"
+git push origin feature/user-validation
+```
+
+Create a **Pull Request** into `main`. GitHub Actions will run automatically before merging.
+
+---
+
+## Optional Deployment Workflow (IIS Example)
+
+A future deployment pipeline can publish the Web project automatically to a Windows IIS server.
+
+### Publish locally
+
+```powershell
+dotnet publish HYBRIDAPP.Web -c Release -o ./publish
+```
+
+The `publish` folder can then be copied to an IIS site.
+
+---
+
+## Environment Variables for Production
+
+Set on the server:
+
+```text
+ConnectionStrings__DefaultConnection=Server=YOUR_SERVER;Database=HybridAppDb;User Id=YOUR_USER;Password=YOUR_PASSWORD;TrustServerCertificate=True
+```
+
+ASP.NET Core will read this automatically through `builder.Configuration`.
+
+---
+
+## Professional Enhancements for Production
+
+* Add unit tests
+* Add integration tests
+* Enable branch protection on `main`
+* Require pull request reviews
+* Add code coverage reporting
+* Add deployment workflow
+* Store secrets in GitHub Secrets
+* Enable Dependabot updates
+
+These additions make the repository production-ready and demonstrate modern enterprise development practices.

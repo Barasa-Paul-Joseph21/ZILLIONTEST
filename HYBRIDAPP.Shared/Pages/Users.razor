@@ -1,0 +1,326 @@
+﻿@page "/users"
+
+@using HYBRIDAPP.Shared.DTOs
+@using HYBRIDAPP.Shared.Interfaces
+@using HYBRIDAPP.Shared.Models
+@inject IUserService UserService
+@using FluentValidation
+@inject IValidator<CreateUserDto> CreateValidator
+@inject IValidator<UpdateUserDto> UpdateValidator
+
+<PageTitle>Users</PageTitle>
+
+<div class="page-container">
+
+    
+    <h2>User Registration</h2>
+
+    @if (!string.IsNullOrWhiteSpace(NotificationMessage))
+    {
+        <div class="alert @(IsSuccess ? "alert-success" : "alert-danger")">
+            @NotificationMessage
+        </div>
+    }
+
+    <EditForm Model="@formModel" OnValidSubmit="HandleSubmit" FormName="UserForm">
+        @* <DataAnnotationsValidator />
+        <ValidationSummary /> *@
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Name</label>
+                <InputText class="form-control" @bind-Value="formModel.Name" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <InputText class="form-control" @bind-Value="formModel.Email" />
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+                <InputText class="form-control" @bind-Value="formModel.PhoneNumber" />
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <InputSelect class="form-control" @bind-Value="formModel.Gender">
+                    <option value="">-- Select Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </InputSelect>
+            </div>
+        </div>
+
+        <div class="button-group">
+            @if (!IsEditMode)
+            {
+                <button type="submit" class="btn btn-primary">Save User</button>
+            }
+            else
+            {
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+            }
+        </div>
+    </EditForm>
+
+    <hr />
+
+    <h3>Search User by ID</h3>
+
+    <div class="search-bar">
+        <InputNumber class="form-control search-input" @bind-Value="SearchId" />
+
+        <button class="btn btn-info" @onclick="ViewUser">View</button>
+        <button class="btn btn-warning" @onclick="LoadUserForEdit">Edit</button>
+        <button class="btn btn-danger" @onclick="DeleteUser">Delete</button>
+    </div>
+
+    <hr />
+
+    <h3>Registered Users</h3>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Gender</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (users.Count == 0)
+                {
+                    <tr>
+                        <td colspan="5" class="text-center">No users found.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var user in users)
+                    {
+                        <tr>
+                            <td>@user.Id</td>
+                            <td>@user.Name</td>
+                            <td>@user.Email</td>
+                            <td>@user.PhoneNumber</td>
+                            <td>@user.Gender</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+   
+
+</div>
+
+@if (ShowModal && SelectedUser is not null)
+{
+    <div class="modal-overlay">
+        <div class="modal-card">
+            <h3>User Details</h3>
+
+            ```
+            <p><strong>ID:</strong> @SelectedUser.Id</p>
+            <p><strong>Name:</strong> @SelectedUser.Name</p>
+            <p><strong>Email:</strong> @SelectedUser.Email</p>
+            <p><strong>Phone:</strong> @SelectedUser.PhoneNumber</p>
+            <p><strong>Gender:</strong> @SelectedUser.Gender</p>
+
+            <button class="btn btn-secondary" @onclick="CloseModal">Close</button>
+        </div>
+    </div>
+
+}
+
+@code {
+    private List<Register> users = new();
+
+private UpdateUserDto formModel = new();
+
+    private bool IsEditMode;
+
+    private int? SearchId;
+
+    private Register? SelectedUser;
+
+    private bool ShowModal;
+
+    private string? NotificationMessage;
+
+    private bool IsSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        users = await UserService.GetAllUsersAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (!IsEditMode)
+            {
+                var createDto = new CreateUserDto
+                {
+                    Name = formModel.Name,
+                    Email = formModel.Email,
+                    PhoneNumber = formModel.PhoneNumber,
+                    Gender = formModel.Gender
+                };
+
+                var validationResult = await CreateValidator.ValidateAsync(createDto);
+
+                if (!validationResult.IsValid)
+                {
+                    ShowError(string.Join(" | ", validationResult.Errors.Select(e => e.ErrorMessage)));
+                    return;
+                }
+
+                await UserService.AddUserAsync(createDto);
+
+                ShowSuccess("User saved successfully.");
+            }
+            else
+            {
+                var validationResult = await UpdateValidator.ValidateAsync(formModel);
+
+                if (!validationResult.IsValid)
+                {
+                    ShowError(string.Join(" | ", validationResult.Errors.Select(e => e.ErrorMessage)));
+                    return;
+                }
+
+                await UserService.UpdateUserAsync(formModel);
+
+                ShowSuccess("User updated successfully.");
+            }
+
+            await LoadUsers();
+
+            ResetForm();
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Operation failed: {ex.Message}");
+        }
+    }
+
+    private async Task LoadUserForEdit()
+    {
+        if (SearchId is null || SearchId <= 0)
+        {
+            ShowError("Enter a valid user ID.");
+            return;
+        }
+
+        var user = await UserService.GetUserByIdAsync(SearchId.Value);
+
+        if (user is null)
+        {
+            ShowError("User not found.");
+            return;
+        }
+
+        formModel = new UpdateUserDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Gender = user.Gender
+        };
+
+        IsEditMode = true;
+
+        ShowSuccess("User loaded for editing.");
+    }
+
+    private async Task DeleteUser()
+    {
+        if (SearchId is null || SearchId <= 0)
+        {
+            ShowError("Enter a valid user ID.");
+            return;
+        }
+
+        try
+        {
+            await UserService.DeleteUserAsync(SearchId.Value);
+
+            await LoadUsers();
+
+            ResetForm();
+
+            ShowSuccess("User deleted successfully.");
+        }
+        catch (Exception ex)
+        {
+            ShowError($"Delete failed: {ex.Message}");
+        }
+    }
+
+    private async Task ViewUser()
+    {
+        if (SearchId is null || SearchId <= 0)
+        {
+            ShowError("Enter a valid user ID.");
+            return;
+        }
+
+        SelectedUser = await UserService.GetUserByIdAsync(SearchId.Value);
+
+        if (SelectedUser is null)
+        {
+            ShowError("User not found.");
+            return;
+        }
+
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+        SelectedUser = null;
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        formModel = new UpdateUserDto();
+
+        IsEditMode = false;
+
+        SearchId = null;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        NotificationMessage = message;
+        IsSuccess = true;
+    }
+
+    private void ShowError(string message)
+    {
+        NotificationMessage = message;
+        IsSuccess = false;
+    }
+
+
+}
