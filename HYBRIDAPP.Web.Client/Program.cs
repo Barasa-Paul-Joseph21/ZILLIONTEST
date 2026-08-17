@@ -18,4 +18,7 @@ builder.Services.AddScoped<IValidator<UpdateUserDto>, UpdateUserDtoValidator>();
 // you must register a Client-side version of that service here as well.
 // builder.Services.AddScoped<IUserService, ClientUserService>();
 
+// This tells Blazor to use 'ClientUserService' whenever 'IUserService' is requested
+//builder.Services.AddScoped<IUserService, ClientUserService>();
+
 await builder.Build().RunAsync();
