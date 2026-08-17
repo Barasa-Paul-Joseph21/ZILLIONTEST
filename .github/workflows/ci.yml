@@ -14,7 +14,7 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout source code
@@ -25,11 +25,14 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
       - name: Restore NuGet packages
-        run: dotnet restore HYBRIDAPP.sln
+        run: dotnet restore HYBRIDAPP.slnx
 
       - name: Build solution
-        run: dotnet build HYBRIDAPP.sln --configuration Release --no-restore
+        run: dotnet build HYBRIDAPP.slnx --configuration Release --no-restore
 
       - name: Run automated tests
-        run: dotnet test HYBRIDAPP.sln --configuration Release --no-build --verbosity normal
+        run: dotnet test HYBRIDAPP.slnx --configuration Release --no-build --verbosity normal
